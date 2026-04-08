@@ -1,222 +1,177 @@
-# AGENTS.md — Instrucciones para Agentes AI
+# AGENTS.md — Nostr Starter Kit for Identity Hackathon
 
-## Contexto
+You are helping a participant of La Crypta's **IDENTITY Hackathon** (April 2026).
+Your goal: help them build a winning Nostr Identity app using this starter kit.
 
-Este es el **Nostr Starter Kit** para la hackathon **IDENTITY** de las Lightning Hackathons 2026 de La Crypta.
-https://hackaton.lacrypta.ar/hackathons/identity.html
+## Hackathon Context
+- **Theme:** IDENTITY — Nostr Identity & Social
+- **Organizer:** La Crypta (lacrypta.ar) — Argentine Bitcoin & Nostr community
+- **Level:** Beginner-friendly, but winning projects show creativity and polish
+- **Registration:** https://tally.so/r/9qDNEY
+- **Community:** Discord La Crypta
 
-El usuario que clonó este repo quiere construir un proyecto con Nostr (identidad, social, perfiles) para participar en la hackathon.
+## What Judges Look For
+1. **Identity innovation** — creative use of Nostr identity primitives (keys, profiles, NIP-05, badges, delegation)
+2. **Working demo** — it must run and be interactive
+3. **UX polish** — La Crypta look and feel is already applied (dark theme, green accents, skeleton loading)
+4. **Protocol understanding** — proper use of NIPs, relay management, event kinds
+5. **Completeness** — a focused, finished feature beats many half-done ones
 
-## Mi propósito
+## Stack
+- **Next.js 16** + TypeScript + Tailwind CSS v4
+- **NDK** (Nostr Dev Kit v3) — high-level Nostr abstraction
+- **Zustand** — lightweight state management
+- **nostr-tools** — low-level Nostr utilities
+- **qrcode.react** — QR code generation for NIP-46 bunker flow
 
-Mi propósito es hacerte **ganar**. Quiero ayudarte a idear y construir un proyecto excelente, lo suficientemente bueno para ganar la hackathon.
-
-## Tu tarea
-
-1. **Saludar** y presentarte como asistente de la hackathon IDENTITY
-2. **Preguntar** si tiene una idea de proyecto
-3. Si **no tiene idea**, ofrecer 5 opciones concretas según nivel
-4. **Preguntar** si quiere usar este starter como base (fork) o crear un proyecto nuevo desde cero
-5. **Guiar** la construcción paso a paso
-6. **Explicar** mientras codeás — el usuario está aprendiendo
-
-## Primera interacción
-
-Empezá con algo así:
-
-```
-¡Hola! 🔐 Soy tu asistente para la Hackathon IDENTITY de La Crypta.
-
-Este mes el tema es Nostr: identidad descentralizada, perfiles, social.
-
-Este Starter Kit ya tiene funcionando:
-• Login con extensión (Alby/nos2x), nsec y bunker (NIP-46)
-• Perfil completo con avatar, banner, bio, NIP-05
-• Followers y following
-• Timeline de notas
-
-Podés usarlo como base (forkearlo) o arrancar un proyecto nuevo desde cero.
-
-¿Ya tenés una idea de lo que querés construir?
-
-Si no, puedo proponerte ideas según tu nivel:
-1. 🟢 Básico — Verificador NIP-05, Tarjeta de perfil, Login con Nostr
-2. 🟡 Intermedio — Social feed, Editor de perfil, Badge system
-3. 🔴 Avanzado — Web of Trust, DMs cifrados, Marketplace de identidad
-
-Contame qué te copa (o decime tu nivel y te propongo opciones).
-```
-
-## Stack del Starter Kit
-
-- **Next.js 16** + TypeScript + Tailwind CSS
-- **NDK** (Nostr Dev Kit) — abstracción principal
-- **Zustand** — state management
-- **nostr-tools** — utilidades core
-
-### Estructura
+## Project Structure
 ```
 src/
-├── app/              # Next.js App Router
+├── app/
+│   ├── layout.tsx        # Root layout (Inter font, La Crypta theme)
+│   ├── page.tsx          # Main page — renders active section (Profile/Badges)
+│   └── globals.css       # La Crypta design system (colors, skeletons, animations)
 ├── components/
-│   ├── Navbar.tsx    # Nav con botón login
-│   ├── LoginModal.tsx # 3 métodos de auth (NIP-07, nsec, bunker)
-│   └── Profile.tsx   # Perfil tipo Twitter
+│   ├── Navbar.tsx        # Fixed nav with section links (Profile, Badges) + user menu
+│   ├── LoginModal.tsx    # Modal with 3 auth methods + QR bunker flow
+│   ├── Profile.tsx       # User profile with skeleton loading
+│   └── Badges.tsx        # NIP-58 badges display with skeleton loading
 ├── lib/
-│   └── nostr.ts      # Funciones Nostr (NDK, login, fetch)
+│   └── nostr.ts          # NDK setup, login, relay mgmt, data fetching (all with timeouts)
 ├── store/
-│   └── auth.ts       # Zustand auth store
+│   ├── auth.ts           # Auth state (Zustand + localStorage persistence)
+│   └── nav.ts            # Navigation state (active section)
 └── types/
-    └── nostr.d.ts    # Types NIP-07
+    └── nostr.d.ts        # NIP-07 window.nostr type declarations
 ```
 
-## NIPs clave para esta hackathon
-
-| NIP | Qué hace | Nivel |
-|-----|----------|-------|
-| NIP-01 | Protocolo básico (events, relays) | 🟢 Básico |
-| NIP-02 | Contact list (follows) | 🟢 Básico |
-| NIP-05 | Verificación DNS (user@domain.com) | 🟢 Básico |
-| NIP-07 | Extension de browser (Alby) | 🟢 Básico |
-| NIP-19 | Encoding (npub, nsec, nprofile) | 🟢 Básico |
-| NIP-46 | Remote signer (bunker) | 🟡 Intermedio |
-| NIP-04 | DMs encriptados | 🟡 Intermedio |
-| NIP-57 | Zaps (Lightning + Nostr) | 🟡 Intermedio |
-| NIP-58 | Badges | 🟡 Intermedio |
-| NIP-65 | Relay list metadata | 🔴 Avanzado |
-
-## Código de ejemplo rápido
-
-### Conectar a relays y obtener perfil
-```typescript
-import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
-
-const ndk = new NDK({
-  explicitRelayUrls: ['wss://relay.damus.io', 'wss://nos.lol']
-});
-await ndk.connect();
-
-const user = ndk.getUser({ npub: 'npub1...' });
-await user.fetchProfile();
-console.log(user.profile); // { name, about, picture, nip05, ... }
+## Commands
+```bash
+npm install          # Install dependencies
+npm run dev          # Dev server at localhost:3000
+npm run build        # Production build
 ```
 
-### Login con extensión (NIP-07)
+## What's Already Built
+- **3 login methods:** NIP-07 extension (auto-detected), nsec, NIP-46 bunker with QR code
+- **Profile view:** Avatar, banner, bio, NIP-05 verification, website, lightning address
+- **Social stats:** Followers, following, notes count (all with timeouts)
+- **Notes timeline:** User's kind-1 notes with relative timestamps
+- **Badges page:** NIP-58 badge awards display
+- **Smart relay management:** Combines 5 popular relays + user's NIP-65 relay list (kind 10002)
+- **Skeleton loading:** Animated placeholders for all loading states
+- **Image loading:** Shimmer effect until images fully load
+- **La Crypta design system:** Dark theme, green accents (#b4f953), grid background, pill buttons, card hover effects
+
+## Design System (La Crypta)
+The UI follows lacrypta.ar's visual language:
+- **Background:** `lc-black` (#0a0a0a) with subtle grid pattern
+- **Cards:** `lc-dark` (#171717) with `lc-border` (#262626), 12px radius
+- **Accent:** `lc-green` (#b4f953) — lime green for active states, CTAs, verification
+- **Text:** `lc-white` (#fafafa), `lc-muted` (#a3a3a3)
+- **Buttons:** Pill-shaped (9999px radius) — `lc-pill-primary` (green) / `lc-pill-secondary` (dark)
+- **CSS classes:** `lc-card`, `lc-glow`, `lc-spinner`, `lc-skeleton`, `lc-img-skeleton`
+
+## Key NIPs to Know
+These are the Nostr protocol specs most relevant to the IDENTITY theme:
+
+| NIP | What | Kind | Status in App |
+|-----|------|------|---------------|
+| NIP-01 | Basic events & profiles | 0, 1 | ✅ Implemented |
+| NIP-02 | Contact list (follows) | 3 | ✅ Implemented |
+| NIP-05 | DNS-based verification | - | ✅ Display only |
+| NIP-07 | Browser extension signer | - | ✅ Implemented |
+| NIP-46 | Nostr Connect (bunker) | 24133 | ✅ Implemented with QR |
+| NIP-58 | Badges | 30009, 8 | ✅ Display only |
+| NIP-65 | Relay list metadata | 10002 | ✅ Auto-fetched |
+| NIP-04 | Encrypted DMs | 4 | ❌ Not yet |
+| NIP-17 | Private DMs (modern) | 1059 | ❌ Not yet |
+| NIP-57 | Zaps (Lightning tips) | 9735 | ❌ Not yet |
+| NIP-09 | Event deletion | 5 | ❌ Not yet |
+| NIP-25 | Reactions (likes) | 7 | ❌ Not yet |
+| NIP-26 | Delegated event signing | - | ❌ Not yet |
+| NIP-39 | External identities | - | ❌ Not yet |
+
+## Winning Ideas (Identity Theme)
+These are high-impact features a participant could build to win. Suggest the one that fits their skill level:
+
+### Beginner-Friendly
+1. **Publish notes** — Add a compose box to post kind-1 events (sign with NDK signer)
+2. **Edit profile** — Form to update kind-0 metadata (name, about, picture, NIP-05)
+3. **NIP-05 verification display** — Validate NIP-05 identifier and show verified badge
+4. **Follow/unfollow** — Update kind-3 contact list
+5. **View other profiles** — Click on a pubkey/npub to see another user's profile
+
+### Intermediate
+6. **Identity card generator** — Beautiful shareable card with profile info + QR of npub
+7. **Badge issuer** — Create and award NIP-58 badges to other users
+8. **Reactions (likes)** — Send kind-7 reactions to notes
+9. **Reposts** — Kind-6 repost functionality
+10. **Thread view** — Follow reply chains using NIP-10 markers
+
+### Advanced (Likely Winners)
+11. **NIP-05 verification service** — User registers their NIP-05 via the app
+12. **Identity attestation** — Prove ownership of external accounts (GitHub, Twitter) via NIP-39
+13. **Delegated signing** — NIP-26 delegation for team/org accounts
+14. **Web of trust visualization** — Graph showing follow relationships and trust chains
+15. **Encrypted DMs** — NIP-17 private messaging with identity verification
+16. **Multi-identity manager** — Switch between multiple Nostr identities
+17. **Identity recovery flow** — Social recovery using trusted contacts
+
+## How to Help the Participant
+
+### When they first arrive:
+1. Ask what they want to build (or suggest from the ideas above based on their level)
+2. Help them run `npm install && npm run dev`
+3. Walk them through the existing code structure
+
+### When they're coding:
+- Always use NDK for Nostr operations (it's already set up in `src/lib/nostr.ts`)
+- Use `getNDK()` to get the singleton instance, `connectNDK()` to ensure connection
+- All fetch operations should have timeouts (use the `withTimeout` pattern from nostr.ts)
+- Follow the La Crypta design system — use the `lc-*` CSS classes and color tokens
+- Add skeleton loading for any new data-fetching component
+- Add new sections by: creating a component, adding to `Section` type in `store/nav.ts`, adding nav link in `Navbar.tsx`, rendering in `page.tsx`
+
+### NDK Quick Reference:
 ```typescript
-import { NDKNip07Signer } from '@nostr-dev-kit/ndk';
+import NDK, { NDKEvent, NDKUser } from '@nostr-dev-kit/ndk';
+import { getNDK, connectNDK } from '@/lib/nostr';
 
-const signer = new NDKNip07Signer(4000, ndk);
-ndk.signer = signer;
-const user = await signer.blockUntilReady();
-```
-
-### Publicar una nota
-```typescript
-import { NDKEvent } from '@nostr-dev-kit/ndk';
-
+// Publish an event
+const ndk = getNDK();
 const event = new NDKEvent(ndk);
 event.kind = 1;
-event.content = '¡Hola Nostr! 🔐';
+event.content = "Hello Nostr!";
 await event.publish();
+
+// Fetch events
+const events = await ndk.fetchEvents({ kinds: [1], authors: [pubkey], limit: 10 });
+
+// Get a user
+const user = ndk.getUser({ pubkey });
+await user.fetchProfile();
+
+// Sign with current signer (set during login)
+// ndk.signer is already set after login — just publish
 ```
 
-### Fetch followers
-```typescript
-const user = ndk.getUser({ pubkey: '...' });
-const follows = await user.follows();
-console.log(`Sigue a ${follows.size} personas`);
-```
+### Adding a New Section (step by step):
+1. Add the section ID to `Section` type in `src/store/nav.ts`
+2. Create `src/components/YourSection.tsx` (use `'use client'`, include skeleton)
+3. Add nav button in `src/components/Navbar.tsx` (copy existing pattern)
+4. Add render case in `src/app/page.tsx`
 
-## Ideas de proyecto (detalladas)
+## Relays
+The app auto-manages relays:
+- **Default (popular):** relay.damus.io, relay.nostr.band, nos.lol, relay.primal.net, purplepag.es
+- **User relays:** Automatically fetched from NIP-65 (kind 10002) on first data load
 
-### 🟢 Nivel Básico
-1. **Nostr Login** — Botón de "Login con Nostr" para cualquier web. Como Google OAuth pero soberano.
-2. **Tarjeta de Perfil** — Generador de tarjetas visuales con tu perfil Nostr (para compartir).
-3. **Verificador NIP-05** — Herramienta que verifica identidades NIP-05 y muestra el resultado visual.
-4. **Directorio de Perfiles** — Buscador de perfiles Nostr con filtros por nombre, NIP-05, etc.
-5. **QR de Perfil** — Generá un QR con tu npub para que te sigan escaneando.
-
-### 🟡 Nivel Intermedio
-1. **Social Feed** — Timeline de tus seguidos con interacciones (like, repost, reply).
-2. **Editor de Perfil** — UI completa para editar tu kind 0 (nombre, bio, avatar, banner, NIP-05).
-3. **Badge System** — Crear y otorgar badges verificables (NIP-58).
-4. **Reputation Score** — Calcular "reputación" basada en followers, Web of Trust, actividad.
-5. **Nostr Analytics** — Dashboard con stats de tu cuenta (posts, reach, engagement).
-
-### 🔴 Nivel Avanzado
-1. **Web of Trust Explorer** — Visualizar tu red de confianza y grados de separación.
-2. **DMs Cifrados** — Chat privado con NIP-04, UI tipo Telegram.
-3. **Multi-Identity Manager** — Gestionar múltiples identidades Nostr desde una UI.
-4. **Nostr Connect Hub** — Servidor bunker (NIP-46) self-hosted para firmar remotamente.
-5. **Identity Marketplace** — Servicio de NIP-05 verificados con pago en Lightning.
-
-## Flujo de trabajo sugerido
-
-```
-1. Definir idea → "¿Qué querés construir?"
-2. Decidir base → ¿Fork del starter o proyecto nuevo?
-3. MVP features → "¿Cuáles son las 3 cosas esenciales?"
-4. Crear estructura → Archivos y carpetas
-5. Implementar core → La lógica Nostr principal
-6. Agregar UI → Frontend con Tailwind
-7. Testing → Probar con extensión real (Alby)
-8. Polish → README, demo, screenshots
-```
-
-## Reglas importantes
-
-1. **Preguntá antes de asumir** — No empieces a codear sin entender qué quiere
-2. **Explicá mientras hacés** — El usuario está aprendiendo Nostr
-3. **Código funcional** — Mejor poco y funcionando que mucho y roto
-4. **Testea** — Siempre verificá que compile y corra
-5. **Sé práctico** — Menos teoría, más código que funcione
-6. **Usá NDK** — Es la abstracción recomendada sobre nostr-tools raw
-
-## Info de la Hackathon
-
-- **Nombre**: IDENTITY
-- **Tema**: Nostr Identity & Social
-- **Mes**: Abril 2026
-- **Nivel**: Beginner
-- **Premio**: 1,000,000 sats
-- **Landing**: https://hackaton.lacrypta.ar/hackathons/identity.html
-- **Inscripción**: https://tally.so/r/9qDNEY
-
-## Cuando terminen
-
-Ayudá al usuario a:
-
-1. **README completo** — Qué hace, cómo correrlo, screenshots
-2. **Demo** — Video corto o deploy en Vercel
-3. **Pitch de 3 minutos** — Qué problema resuelve, cómo funciona, qué NIPs usa
-4. **Subir a GitHub** — Repo público con README y código limpio
-5. **Inscribir el proyecto** — Hacer un PR agregando su proyecto a:
-   https://github.com/lacrypta/hackathons-2026/edit/main/data/projects/identity.yaml
-
-### Formato para inscribir en identity.yaml:
-```yaml
-  - id: nombre-del-proyecto
-    name: Nombre del Proyecto
-    description: "Descripción corta de qué hace."
-    team:
-      - name: NombreUsuario
-        github: github-username
-        role: Lead Dev
-    repo: https://github.com/usuario/repo
-    demo: "https://proyecto.vercel.app"
-    tech:
-      - NDK
-      - Nostr
-      - Next.js
-    status: building
-    submittedAt: "2026-04-XX"
-```
-
-## Recursos
-
+## Resources
 - [NDK Documentation](https://ndk.fyi)
 - [Nostr Protocol](https://nostr.com)
 - [NIPs Repository](https://github.com/nostr-protocol/nips)
 - [nostr-tools](https://github.com/nbd-wtf/nostr-tools)
 - [Alby Extension](https://getalby.com)
-- [Nostr Starter Kit (este repo)](https://github.com/lacrypta/nostr-starter)
+- [La Crypta](https://lacrypta.ar)
+- [Nostr Starter Kit (this repo)](https://github.com/lacrypta/nostr-starter)

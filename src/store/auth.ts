@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { NDKUser } from '@nostr-dev-kit/ndk';
-import { NostrProfile, parseProfile, LoginMethod } from '@/lib/nostr';
+import { NostrProfile, parseProfile, LoginMethod, resetUserRelays } from '@/lib/nostr';
 
 interface AuthState {
   isConnected: boolean;
@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
       setError: (error) => set({ error, isLoading: false }),
       
       logout: () => {
+        resetUserRelays();
         set({
           isConnected: false,
           user: null,

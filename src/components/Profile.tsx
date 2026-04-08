@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ImgHTMLAttributes } from 'react';
 import { NDKEvent } from '@nostr-dev-kit/ndk';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -10,6 +10,92 @@ import {
   fetchUserNotes,
   formatTimestamp,
 } from '@/lib/nostr';
+
+function SkeletonImg(props: ImgHTMLAttributes<HTMLImageElement>) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="lc-img-skeleton w-full h-full">
+      <img
+        {...props}
+        className={`${props.className || ''} ${loaded ? 'loaded' : ''}`}
+        onLoad={() => setLoaded(true)}
+      />
+    </div>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="min-h-screen pt-16">
+      {/* Banner skeleton */}
+      <div className="h-52 lc-skeleton" style={{ borderRadius: 0 }} />
+
+      <div className="max-w-2xl mx-auto px-6">
+        {/* Avatar skeleton */}
+        <div className="relative -mt-16 mb-6">
+          <div className="w-32 h-32 lc-skeleton-rounded border-4 border-lc-black" />
+        </div>
+
+        {/* Name skeleton */}
+        <div className="mb-4 space-y-2">
+          <div className="lc-skeleton h-8 w-48" />
+          <div className="lc-skeleton h-4 w-32" />
+        </div>
+
+        {/* Bio skeleton */}
+        <div className="space-y-2 mb-5">
+          <div className="lc-skeleton h-4 w-full" />
+          <div className="lc-skeleton h-4 w-3/4" />
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="flex gap-1 mb-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex-1 py-3 px-4 bg-lc-dark rounded-xl text-center border border-lc-border/50">
+              <div className="lc-skeleton h-6 w-10 mx-auto mb-1" />
+              <div className="lc-skeleton h-3 w-16 mx-auto" />
+            </div>
+          ))}
+        </div>
+
+        {/* Pubkey skeleton */}
+        <div className="p-4 bg-lc-dark rounded-xl mb-6 border border-lc-border/50">
+          <div className="lc-skeleton h-3 w-16 mb-2" />
+          <div className="lc-skeleton h-4 w-full" />
+        </div>
+
+        {/* Tabs skeleton */}
+        <div className="border-b border-lc-border mb-6">
+          <div className="flex gap-4 pb-3">
+            <div className="lc-skeleton h-4 w-12" />
+            <div className="lc-skeleton h-4 w-14" />
+            <div className="lc-skeleton h-4 w-10" />
+          </div>
+        </div>
+
+        {/* Notes skeleton */}
+        <div className="space-y-3 pb-12">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="lc-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 lc-skeleton-rounded" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="lc-skeleton h-4 w-28" />
+                  <div className="lc-skeleton h-3 w-16" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="lc-skeleton h-4 w-full" />
+                <div className="lc-skeleton h-4 w-5/6" />
+                <div className="lc-skeleton h-4 w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Profile() {
   const { isConnected, profile } = useAuthStore();
@@ -27,17 +113,17 @@ export default function Profile() {
 
   const loadProfileData = async () => {
     if (!profile) return;
-    
+
     setLoading(true);
     try {
       await connectNDK();
-      
+
       const [followersData, followingData, notesData] = await Promise.all([
         fetchFollowers(profile.pubkey),
         fetchFollowing(profile.pubkey),
         fetchUserNotes(profile.pubkey, 20),
       ]);
-      
+
       setFollowers(followersData);
       setFollowing(followingData);
       setNotes(notesData);
@@ -51,44 +137,77 @@ export default function Profile() {
   if (!isConnected || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔐</div>
-          <h1 className="text-2xl font-bold text-white mb-2">Nostr Starter Kit</h1>
-          <p className="text-zinc-400 mb-6">Login to see your profile</p>
-          <div className="text-sm text-zinc-500">
-            Connect with Extension, nsec, or Bunker
+        <div className="text-center max-w-lg mx-auto px-6">
+          <div className="w-20 h-20 mx-auto mb-8 bg-lc-green/10 rounded-2xl flex items-center justify-center lc-glow">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#b4f953" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <h1 className="text-4xl font-extrabold text-lc-white mb-3 tracking-tight">
+            Nostr Starter Kit
+          </h1>
+          <p className="text-lg text-lc-muted mb-8">
+            Connect your identity to explore the decentralized social network
+          </p>
+          <div className="flex items-center justify-center gap-3 text-sm text-lc-muted/70">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-lc-green/60" />
+              Extension
+            </span>
+            <span className="text-lc-border">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-lc-green/60" />
+              nsec
+            </span>
+            <span className="text-lc-border">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-lc-green/60" />
+              Bunker
+            </span>
+          </div>
+          <div className="mt-12 text-xs text-lc-muted/40 font-mono">
+            Powered by La Crypta
           </div>
         </div>
       </div>
     );
   }
 
+  if (loading) {
+    return <ProfileSkeleton />;
+  }
+
   return (
     <div className="min-h-screen pt-16">
       {/* Banner */}
-      <div className="h-48 bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 relative">
-        {profile.banner && (
-          <img
+      <div className="h-52 lc-banner-gradient relative overflow-hidden">
+        {profile.banner ? (
+          <SkeletonImg
             src={profile.banner}
             alt="Banner"
             className="w-full h-full object-cover"
           />
+        ) : (
+          <div className="absolute inset-0 lc-grid-bg opacity-40" />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-lc-black via-transparent to-transparent" />
       </div>
 
       {/* Profile Header */}
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="relative -mt-16 mb-4">
+      <div className="max-w-2xl mx-auto px-6">
+        <div className="relative -mt-16 mb-6">
           {/* Avatar */}
-          <div className="w-32 h-32 rounded-full border-4 border-black bg-zinc-900 overflow-hidden">
+          <div className="w-32 h-32 rounded-2xl border-4 border-lc-black bg-lc-dark overflow-hidden shadow-2xl">
             {profile.picture ? (
-              <img
+              <SkeletonImg
                 src={profile.picture}
                 alt={profile.name || 'Profile'}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-purple-600 flex items-center justify-center text-white text-4xl">
+              <div className="w-full h-full bg-lc-olive flex items-center justify-center text-lc-green text-4xl font-bold">
                 {(profile.name || profile.displayName || 'N')[0].toUpperCase()}
               </div>
             )}
@@ -97,15 +216,18 @@ export default function Profile() {
 
         {/* Name & Bio */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-3xl font-extrabold text-lc-white tracking-tight">
             {profile.displayName || profile.name || 'Anonymous'}
           </h1>
           {profile.name && profile.displayName && profile.name !== profile.displayName && (
-            <div className="text-zinc-500">@{profile.name}</div>
+            <div className="text-lc-muted mt-0.5">@{profile.name}</div>
           )}
           {profile.nip05 && (
-            <div className="text-purple-400 text-sm flex items-center gap-1 mt-1">
-              <span>✓</span>
+            <div className="text-lc-green text-sm flex items-center gap-1.5 mt-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
               <span>{profile.nip05}</span>
             </div>
           )}
@@ -113,71 +235,69 @@ export default function Profile() {
 
         {/* Bio */}
         {profile.about && (
-          <p className="text-zinc-300 mb-4 whitespace-pre-wrap">{profile.about}</p>
+          <p className="text-lc-white/80 mb-5 whitespace-pre-wrap leading-relaxed">{profile.about}</p>
         )}
 
         {/* Links */}
-        <div className="flex flex-wrap gap-4 text-sm text-zinc-400 mb-4">
+        <div className="flex flex-wrap gap-4 text-sm text-lc-muted mb-5">
           {profile.website && (
             <a
               href={profile.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-purple-400 transition"
+              className="flex items-center gap-1.5 hover:text-lc-green transition"
             >
-              <span>🔗</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+              </svg>
               <span>{profile.website.replace(/^https?:\/\//, '')}</span>
             </a>
           )}
           {profile.lud16 && (
-            <div className="flex items-center gap-1 text-yellow-500">
-              <span>⚡</span>
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
               <span>{profile.lud16}</span>
             </div>
           )}
         </div>
 
         {/* Stats */}
-        <div className="flex gap-6 mb-6">
-          <div className="text-center">
-            <div className="text-xl font-bold text-white">
-              {loading ? '...' : following.length}
+        <div className="flex gap-1 mb-6">
+          {[
+            { label: 'Following', value: following.length },
+            { label: 'Followers', value: followers.length },
+            { label: 'Notes', value: notes.length },
+          ].map((stat) => (
+            <div key={stat.label} className="flex-1 py-3 px-4 bg-lc-dark rounded-xl text-center border border-lc-border/50">
+              <div className="text-xl font-bold text-lc-white">{stat.value}</div>
+              <div className="text-xs text-lc-muted mt-0.5 uppercase tracking-wider">{stat.label}</div>
             </div>
-            <div className="text-sm text-zinc-500">Following</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xl font-bold text-white">
-              {loading ? '...' : followers.length}
-            </div>
-            <div className="text-sm text-zinc-500">Followers</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xl font-bold text-white">
-              {loading ? '...' : notes.length}
-            </div>
-            <div className="text-sm text-zinc-500">Notes</div>
-          </div>
+          ))}
         </div>
 
         {/* Pubkey */}
-        <div className="p-3 bg-zinc-900 rounded-lg mb-6">
-          <div className="text-xs text-zinc-500 mb-1">Public Key (npub)</div>
-          <div className="text-sm text-zinc-300 font-mono break-all">
+        <div className="p-4 bg-lc-dark rounded-xl mb-6 border border-lc-border/50">
+          <div className="text-xs text-lc-muted mb-1.5 uppercase tracking-wider font-medium">Public Key</div>
+          <div className="text-sm text-lc-white/70 font-mono break-all leading-relaxed">
             {profile.npub}
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-zinc-800 mb-4">
-          <div className="flex gap-8">
+        <div className="border-b border-lc-border mb-6">
+          <div className="flex gap-0">
             {(['posts', 'replies', 'likes'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-sm font-medium transition border-b-2 -mb-px ${
+                className={`pb-3 px-5 text-sm font-medium transition-all border-b-2 -mb-px ${
                   activeTab === tab
-                    ? 'text-white border-purple-500'
-                    : 'text-zinc-500 border-transparent hover:text-zinc-300'
+                    ? 'text-lc-green border-lc-green'
+                    : 'text-lc-muted border-transparent hover:text-lc-white hover:border-lc-border'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -187,44 +307,46 @@ export default function Profile() {
         </div>
 
         {/* Notes Feed */}
-        <div className="space-y-4 pb-8">
-          {loading ? (
-            <div className="text-center py-8 text-zinc-500">
-              <div className="animate-spin inline-block mr-2">⚡</div>
-              Loading notes...
-            </div>
-          ) : notes.length === 0 ? (
-            <div className="text-center py-8 text-zinc-500">
-              No notes yet
+        <div className="space-y-3 pb-12">
+          {notes.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 mx-auto mb-3 bg-lc-dark rounded-xl flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <p className="text-lc-muted text-sm">No notes yet</p>
             </div>
           ) : (
             notes.map((note) => (
               <div
                 key={note.id}
-                className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl hover:border-zinc-700 transition"
+                className="lc-card p-5"
               >
                 <div className="flex items-center gap-3 mb-3">
                   {profile.picture ? (
-                    <img
-                      src={profile.picture}
-                      alt=""
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden">
+                      <SkeletonImg
+                        src={profile.picture}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                    <div className="w-10 h-10 rounded-xl bg-lc-olive flex items-center justify-center text-lc-green font-semibold text-sm">
                       {(profile.name || 'N')[0].toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-white truncate">
+                    <div className="font-semibold text-lc-white text-sm truncate">
                       {profile.displayName || profile.name || 'Anonymous'}
                     </div>
-                    <div className="text-sm text-zinc-500">
+                    <div className="text-xs text-lc-muted">
                       {formatTimestamp(note.created_at || 0)}
                     </div>
                   </div>
                 </div>
-                <p className="text-zinc-200 whitespace-pre-wrap break-words">
+                <p className="text-lc-white/85 whitespace-pre-wrap break-words leading-relaxed">
                   {note.content}
                 </p>
               </div>
